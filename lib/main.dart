@@ -3,8 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/admin_dashboard.dart';
-import 'screens/cashier_dashboard.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/manage_cashier_screen.dart';
 import 'screens/manage_menu_screen.dart';
 import 'screens/manage_member_screen.dart';
@@ -327,8 +326,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
-        '/admin_dashboard': (context) => const AdminDashboard(),
-        '/cashier_dashboard': (context) => const CashierDashboard(),
+        '/dashboard': (context) => const DashboardScreen(),
         '/manage_cashier': (context) => const ManageCashierScreen(),
         '/manage_menu': (context) => const ManageMenuScreen(),
         '/manage_member': (context) => const ManageMemberScreen(),

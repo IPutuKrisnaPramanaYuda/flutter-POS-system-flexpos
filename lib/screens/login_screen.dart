@@ -37,11 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        if (matchedUser['role'] == 'ADMIN') {
-          Navigator.pushReplacementNamed(context, '/admin_dashboard');
-        } else {
-          Navigator.pushReplacementNamed(context, '/cashier_dashboard');
-        }
+        Navigator.pushReplacementNamed(context, '/dashboard');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
