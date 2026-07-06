@@ -99,5 +99,8 @@ class StorageService {
     final details = await getTransactionDetailsHistory();
     details.removeWhere((det) => det['id_transaksi'] == idTransaksi);
     await setCache('transaction_details_history', details);
+
+    // Hapus dari antrean pending jika ada
+    await removePendingTransaction(idTransaksi);
   }
 }

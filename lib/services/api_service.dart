@@ -1,91 +1,53 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'storage_service.dart';
 
 class ApiService {
-  // URL Web App Google Apps Script Anda setelah di-deploy
-  static String gasUrl =
-      "https://script.google.com/macros/s/AKfycbxF83nbNKU5dWWbBraYJMGgXpTUpFhkVu3ntxGVCFiFyUynkbBIZGE-GeNttOy0PK29/exec";
-
-  // Helper generik untuk mengirimkan POST mutasi master data ke Apps Script secara langsung
-  static Future<Map<String, dynamic>> sendMutation(Map<String, dynamic> payload) async {
-    try {
-      final response = await http.post(
-        Uri.parse(gasUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 8));
-
-      if (response.statusCode == 200 || response.statusCode == 302) {
-        try {
-          final decoded = jsonDecode(response.body);
-          return decoded;
-        } catch (_) {
-          // Gagal parsing JSON (misal redirect HTML dari Google), 
-          // tapi karena status code 200/302, request dipastikan sudah sampai dan diproses di spreadsheet.
-          return {"status": "success", "message": "Mutasi berhasil diproses."};
-        }
-      }
-      return {"status": "offline", "message": "Respon server gagal (Status Code: ${response.statusCode})."};
-    } catch (_) {
-      return {
-        "status": "offline",
-        "message": "Gagal terhubung ke server. Perubahan disimpan secara lokal."
-      };
-    }
-  }
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // -------------------------------------------------------------------------
   // SINKRONISASI DATA MASTER & RIWAYAT (GET)
   // -------------------------------------------------------------------------
   static Future<Map<String, dynamic>> syncAllData() async {
     try {
-      // 1. Fetch Users
-      final resUsers = await http.get(Uri.parse("$gasUrl?action=get_users")).timeout(const Duration(seconds: 8));
-      final decodedUsers = jsonDecode(resUsers.body);
-      if (decodedUsers['status'] == 'success') {
-        await StorageService.setCache('users', decodedUsers['data']);
-      }
+      // 1. Fetch Users/Cashier
+      final usersSnapshot = await _firestore.collection('users').get().timeout(const Duration(seconds: 8));
+      final usersList = usersSnapshot.docs.map((doc) => doc.data()).toList();
+      await StorageService.setCache('users', usersList);
 
       // 2. Fetch Kategori
-      final resKategori = await http.get(Uri.parse("$gasUrl?action=get_kategori")).timeout(const Duration(seconds: 8));
-      final decodedKategori = jsonDecode(resKategori.body);
-      if (decodedKategori['status'] == 'success') {
-        final List<dynamic> catList = decodedKategori['data'];
-        final categories = catList.map((e) => e['nama'].toString()).toList();
-        await StorageService.setCache('kategori', categories);
-      }
+      final kategoriSnapshot = await _firestore.collection('kategori').get().timeout(const Duration(seconds: 8));
+      final categories = kategoriSnapshot.docs.map((doc) => doc.data()['nama'].toString()).toList();
+      await StorageService.setCache('kategori', categories);
 
       // 3. Fetch Menu
-      final resMenu = await http.get(Uri.parse("$gasUrl?action=get_menu")).timeout(const Duration(seconds: 8));
-      final decodedMenu = jsonDecode(resMenu.body);
-      if (decodedMenu['status'] == 'success') {
-        await StorageService.setCache('menu', decodedMenu['data']);
-      }
+      final menuSnapshot = await _firestore.collection('menu').get().timeout(const Duration(seconds: 8));
+      final menuList = menuSnapshot.docs.map((doc) => doc.data()).toList();
+      await StorageService.setCache('menu', menuList);
 
       // 4. Fetch Member
-      final resMember = await http.get(Uri.parse("$gasUrl?action=get_member")).timeout(const Duration(seconds: 8));
-      final decodedMember = jsonDecode(resMember.body);
-      if (decodedMember['status'] == 'success') {
-        await StorageService.setCache('member', decodedMember['data']);
-      }
+      final memberSnapshot = await _firestore.collection('member').get().timeout(const Duration(seconds: 8));
+      final memberList = memberSnapshot.docs.map((doc) => doc.data()).toList();
+      await StorageService.setCache('member', memberList);
 
       // 5. Fetch Riwayat Transaksi & Detail
-      final resTx = await http.get(Uri.parse("$gasUrl?action=get_transactions")).timeout(const Duration(seconds: 8));
-      final decodedTx = jsonDecode(resTx.body);
-      if (decodedTx['status'] == 'success') {
-        await StorageService.setCache('transactions_history', decodedTx['data']);
-      }
+      final txSnapshot = await _firestore.collection('transactions').get().timeout(const Duration(seconds: 8));
+      final txList = txSnapshot.docs.map((doc) => doc.data()).toList();
+      await StorageService.setCache('transactions_history', txList);
 
-      final resTxDet = await http.get(Uri.parse("$gasUrl?action=get_transaction_details")).timeout(const Duration(seconds: 8));
-      final decodedTxDet = jsonDecode(resTxDet.body);
-      if (decodedTxDet['status'] == 'success') {
-        await StorageService.setCache('transaction_details_history', decodedTxDet['data']);
-      }
+      final txDetSnapshot = await _firestore.collection('transaction_details').get().timeout(const Duration(seconds: 8));
+      final txDetList = txDetSnapshot.docs.map((doc) => doc.data()).toList();
+      await StorageService.setCache('transaction_details_history', txDetList);
 
-      return {"status": "success", "message": "Semua data master & riwayat berhasil disinkronkan dari Google Sheets!"};
+      return {
+        "status": "success",
+        "message": "Semua data master & riwayat berhasil disinkronkan dari Firestore!"
+      };
     } catch (e) {
-      return {"status": "error", "message": "Koneksi offline atau terputus: ${e.toString()}"};
+      return {
+        "status": "error",
+        "message": "Koneksi offline atau terputus: ${e.toString()}"
+      };
     }
   }
 
@@ -93,33 +55,41 @@ class ApiService {
   // SINKRONISASI TRANSAKSI (POST CHKOUT)
   // -------------------------------------------------------------------------
   static Future<Map<String, dynamic>> checkoutTransaction(Map<String, dynamic> payload) async {
-    final header = payload['transaksi'];
-    final items = payload['items'];
+    final header = payload['transaksi'] as Map<String, dynamic>;
+    final items = payload['items'] as List;
 
     // Simpan ke riwayat transaksi lokal HP terlebih dahulu agar langsung muncul di Riwayat
     await StorageService.saveTransactionHistory(header);
     await StorageService.saveTransactionDetailsHistory(items);
 
     try {
-      final response = await http.post(
-        Uri.parse(gasUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 8));
+      // 1. Simpan header transaksi ke Firestore
+      await _firestore
+          .collection('transactions')
+          .doc(header['id_transaksi'])
+          .set(header)
+          .timeout(const Duration(seconds: 8));
 
-      // Jika status code sukses (200 / 302), dipastikan transaksi sudah masuk ke spreadsheet Google Sheets
-      if (response.statusCode == 200 || response.statusCode == 302) {
-        return {"status": "success", "message": "Transaksi berhasil terkirim ke Google Sheets!"};
+      // 2. Simpan setiap item detail ke Firestore menggunakan Batch Write
+      final batch = _firestore.batch();
+      for (final item in items) {
+        final itemMap = item as Map<String, dynamic>;
+        final docRef = _firestore
+            .collection('transaction_details')
+            .doc('${itemMap['id_transaksi']}_${itemMap['id_menu']}');
+        batch.set(docRef, itemMap);
       }
+      await batch.commit().timeout(const Duration(seconds: 8));
 
-      // Jika status code bukan sukses, amankan di pending HP
-      await StorageService.savePendingTransaction(payload);
-      return {"status": "offline", "message": "Respon server gagal. Transaksi dicadangkan di lokal HP."};
+      return {
+        "status": "success",
+        "message": "Transaksi berhasil terkirim ke Firestore!"
+      };
     } catch (_) {
-      // Jika terjadi Timeout/SocketException asli (offline)
+      // Jika offline, amankan di pending HP
       await StorageService.savePendingTransaction(payload);
       return {
-        "status": "offline", 
+        "status": "offline",
         "message": "Koneksi internet offline/tidak stabil. Transaksi dicadangkan di lokal HP."
       };
     }
@@ -157,17 +127,28 @@ class ApiService {
       }
 
       try {
-        final response = await http.post(
-          Uri.parse(gasUrl),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode(tx),
-        ).timeout(const Duration(seconds: 8));
+        final header = tx['transaksi'] as Map<String, dynamic>;
+        final items = tx['items'] as List;
 
-        // Pengecekan status code sukses untuk hapus dari pending queue
-        if (response.statusCode == 200 || response.statusCode == 302) {
-          toRemove.add(idTransaksi);
-          successCount++;
+        // Kirim ke Firestore
+        await _firestore
+            .collection('transactions')
+            .doc(idTransaksi)
+            .set(header)
+            .timeout(const Duration(seconds: 8));
+
+        final batch = _firestore.batch();
+        for (final item in items) {
+          final itemMap = item as Map<String, dynamic>;
+          final docRef = _firestore
+              .collection('transaction_details')
+              .doc('${itemMap['id_transaksi']}_${itemMap['id_menu']}');
+          batch.set(docRef, itemMap);
         }
+        await batch.commit().timeout(const Duration(seconds: 8));
+
+        toRemove.add(idTransaksi);
+        successCount++;
       } catch (_) {
         break; // Hentikan loop jika koneksi terputus
       }
@@ -185,7 +166,7 @@ class ApiService {
     return {
       "status": "success",
       "count": successCount,
-      "message": "$successCount transaksi tertunda berhasil disinkronkan!"
+      "message": "$successCount transaksi tertunda berhasil disinkronkan ke Firestore!"
     };
   }
 
@@ -193,8 +174,7 @@ class ApiService {
   // MUTASI DATA MASTER KE SPREADSHEET (POST CRUD)
   // -------------------------------------------------------------------------
   static Future<void> postAddCashier(Map<String, dynamic> cashier) async {
-    await sendMutation({
-      "action": "add_cashier",
+    await _firestore.collection('users').doc(cashier['id']).set({
       "id": cashier['id'],
       "nama": cashier['nama'],
       "role": cashier['role'],
@@ -203,12 +183,11 @@ class ApiService {
   }
 
   static Future<void> postDeleteCashier(String id) async {
-    await sendMutation({"action": "delete_cashier", "id": id});
+    await _firestore.collection('users').doc(id).delete();
   }
 
   static Future<void> postAddMenu(Map<String, dynamic> menu) async {
-    await sendMutation({
-      "action": "add_menu",
+    await _firestore.collection('menu').doc(menu['id']).set({
       "id": menu['id'],
       "nama": menu['nama'],
       "harga": menu['harga'],
@@ -218,24 +197,20 @@ class ApiService {
   }
 
   static Future<void> postUpdateMenu(Map<String, dynamic> menu) async {
-    await sendMutation({
-      "action": "update_menu",
-      "id": menu['id'],
+    await _firestore.collection('menu').doc(menu['id']).update({
       "nama": menu['nama'],
       "harga": menu['harga'],
       "stok": menu['stok'],
       "kategori": menu['kategori'],
-      "action_type": "update",
     });
   }
 
   static Future<void> postDeleteMenu(String id) async {
-    await sendMutation({"action": "delete_menu", "id": id});
+    await _firestore.collection('menu').doc(id).delete();
   }
 
   static Future<void> postAddMember(Map<String, dynamic> member) async {
-    await sendMutation({
-      "action": "add_member",
+    await _firestore.collection('member').doc(member['id']).set({
       "id": member['id'],
       "nama": member['nama'],
       "telepon": member['telepon'],
@@ -243,17 +218,93 @@ class ApiService {
   }
 
   static Future<void> postAddCategory(String nama) async {
-    await sendMutation({"action": "add_category", "nama": nama});
+    await _firestore.collection('kategori').doc(nama).set({
+      "nama": nama,
+    });
   }
 
   static Future<void> postDeleteCategory(String nama) async {
-    await sendMutation({"action": "delete_category", "nama": nama});
+    await _firestore.collection('kategori').doc(nama).delete();
   }
 
   static Future<Map<String, dynamic>> postDeleteTransaction(String idTransaksi) async {
-    return await sendMutation({
-      "action": "delete_transaction",
-      "id_transaksi": idTransaksi,
-    });
+    try {
+      await _firestore.collection('transactions').doc(idTransaksi).delete();
+      
+      // Hapus detail transaksinya juga
+      final detailsQuery = await _firestore
+          .collection('transaction_details')
+          .where('id_transaksi', isEqualTo: idTransaksi)
+          .get();
+          
+      final batch = _firestore.batch();
+      for (final doc in detailsQuery.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      return {"status": "success", "message": "Transaksi berhasil dihapus dari Firestore."};
+    } catch (e) {
+      return {"status": "error", "message": "Gagal menghapus transaksi: ${e.toString()}"};
+    }
+  }
+
+  static Future<void> checkAndSeedFirestore() async {
+    try {
+      final usersSnapshot = await _firestore
+          .collection('users')
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 8));
+
+      if (usersSnapshot.docs.isEmpty) {
+        debugPrint('[Firestore Seeder] Database kosong. Mulai seeding data default...');
+
+        // 1. Seed Cashier/Users
+        final defaultCashiers = [
+          {'id': 'K001', 'nama': 'ADMIN', 'role': 'ADMIN', 'pin': '12345'},
+          {'id': 'K002', 'nama': 'Budi', 'role': 'KASIR', 'pin': '4321'},
+        ];
+        for (final cashier in defaultCashiers) {
+          await _firestore.collection('users').doc(cashier['id']).set(cashier);
+        }
+
+        // 2. Seed Kategori
+        final defaultCategories = ['Coffee', 'Milk Series', 'Bakery'];
+        for (final cat in defaultCategories) {
+          await _firestore.collection('kategori').doc(cat).set({'nama': cat});
+        }
+
+        // 3. Seed Menu
+        final defaultMenus = [
+          {'id': 'M001', 'nama': 'Espresso Single', 'harga': 18000, 'stok': 30, 'kategori': 'Coffee'},
+          {'id': 'M002', 'nama': 'Caramel Macchiato', 'harga': 28000, 'stok': 20, 'kategori': 'Coffee'},
+          {'id': 'M003', 'nama': 'Cafe Latte', 'harga': 24000, 'stok': 25, 'kategori': 'Coffee'},
+          {'id': 'M004', 'nama': 'Avocado Coffee', 'harga': 26000, 'stok': 15, 'kategori': 'Milk Series'},
+          {'id': 'M005', 'nama': 'Croissant Chocolate', 'harga': 22000, 'stok': 10, 'kategori': 'Bakery'},
+          {'id': 'M006', 'nama': 'Cheese Danish', 'harga': 20000, 'stok': 12, 'kategori': 'Bakery'},
+        ];
+        for (final menu in defaultMenus) {
+          final String menuId = menu['id'] as String;
+          await _firestore.collection('menu').doc(menuId).set(menu);
+        }
+
+        // 4. Seed Member
+        final defaultMembers = [
+          {'id': 'MB001', 'nama': 'Andi Wijaya', 'telepon': '081234567890'},
+          {'id': 'MB002', 'nama': 'Siti Rahma', 'telepon': '089876543210'},
+          {'id': 'MB003', 'nama': 'Joko Susilo', 'telepon': '085712345678'},
+        ];
+        for (final member in defaultMembers) {
+          await _firestore.collection('member').doc(member['id']).set(member);
+        }
+
+        debugPrint('[Firestore Seeder] Seeding data default selesai!');
+      } else {
+        debugPrint('[Firestore Seeder] Database sudah berisi data. Seeding dilewati.');
+      }
+    } catch (e) {
+      debugPrint('[Firestore Seeder] Gagal melakukan seeder: $e');
+    }
   }
 }

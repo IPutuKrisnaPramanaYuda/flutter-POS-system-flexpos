@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:gal/gal.dart';
 import '../data/dummy_data.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -509,8 +512,11 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     );
                     return;
                   }
-                  Navigator.pop(ctx);
-                  _processCheckout(_grandTotal, 0, 'QRIS', selectedCustomer, isGuestMode);
+                  _handleQrisPayment(
+                    dialogCtx: ctx,
+                    selectedCustomer: selectedCustomer,
+                    isGuestMode: isGuestMode,
+                  );
                 },
                 icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
                 label: Text('Bayar QRIS', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
@@ -519,6 +525,132 @@ class _TransactionScreenState extends State<TransactionScreen> {
         ),
       ),
     );
+  }
+
+  void _showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                message,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleQrisPayment({
+    required BuildContext dialogCtx,
+    required Map<String, dynamic>? selectedCustomer,
+    required bool isGuestMode,
+  }) async {
+    final picker = ImagePicker();
+    try {
+      // Buka kamera untuk menjepret bukti pembayaran QRIS
+      final XFile? photo = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70, // Kompres sedikit agar ukuran gambar hemat memori
+      );
+
+      if (photo == null) {
+        // Kasir membatalkan pengambilan foto
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pembayaran QRIS dibatalkan: Foto bukti pembayaran harus diambil!'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Tutup dialog pembayaran secara instan
+      if (dialogCtx.mounted) {
+        Navigator.pop(dialogCtx);
+      }
+
+      // Tampilkan dialog loading verifikasi agar tidak ambigu
+      if (mounted) {
+        _showLoadingDialog(context, 'Memverifikasi Pembayaran & Menyimpan Bukti QRIS...');
+      }
+
+      // Simpan foto bukti di latar belakang (background task)
+      _saveQrisPhotoInBackground(photo);
+
+      // Berikan delay animasi loading selama 1.5 detik
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      // Tutup dialog loading
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Lanjutkan ke proses checkout & cetak struk
+      _processCheckout(_grandTotal, 0, 'QRIS', selectedCustomer, isGuestMode);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan kamera: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveQrisPhotoInBackground(XFile photo) async {
+    try {
+      // 1. Simpan langsung ke Galeri Sistem (DCIM/Pictures) menggunakan package Gal (MediaStore API)
+      await Gal.putImage(photo.path);
+      debugPrint('[QRIS Photo] Berhasil disimpan langsung ke Galeri HP (DCIM/Pictures) via MediaStore.');
+    } catch (e) {
+      debugPrint('[QRIS Photo] Gagal menyimpan ke Galeri HP: $e. Mencoba fallback ke penyimpanan lokal.');
+      
+      // Fallback: simpan di direktori privat aplikasi jika Galeri gagal
+      try {
+        final Directory? extDir = await getExternalStorageDirectory();
+        final Directory appDir = extDir ?? await getApplicationDocumentsDirectory();
+        
+        final String saveDirPath = '${appDir.path}/FlexPOS_QRIS';
+        final Directory saveDir = Directory(saveDirPath);
+        if (!await saveDir.exists()) {
+          await saveDir.create(recursive: true);
+        }
+
+        final String fileName = 'QRIS_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final String destinationPath = '$saveDirPath/$fileName';
+        
+        final File localImageFile = File(photo.path);
+        await localImageFile.copy(destinationPath);
+        
+        debugPrint('[QRIS Photo Fallback] Berhasil disimpan di: $destinationPath');
+      } catch (err) {
+        debugPrint('[QRIS Photo Fallback] Gagal menyimpan foto cadangan: $err');
+      }
+    }
   }
 
   // ========================

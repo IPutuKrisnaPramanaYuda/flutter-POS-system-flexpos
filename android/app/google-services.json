@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "38032763411",
+    "project_id": "flexpos-pemob",
+    "storage_bucket": "flexpos-pemob.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:38032763411:android:dbca9fd7efea2e23c16de6",
+        "android_client_info": {
+          "package_name": "com.example.pos_kasir"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADTDo5skLAgKO7RscCrPi98MGU-J5XCdI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

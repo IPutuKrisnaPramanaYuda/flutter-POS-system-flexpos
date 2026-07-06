@@ -377,6 +377,6 @@ class DummyDatabase {
       (det) => det['id_transaksi'] == idTransaksi,
     );
 
-    ApiService.postDeleteTransaction(idTransaksi);
+    await ApiService.postDeleteTransaction(idTransaksi);
   }
 }
