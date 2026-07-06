@@ -166,6 +166,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
     int kembalian = 0;
     String selectedMethod = 'Cash';
     String searchError = '';
+    String? dialogError;
 
     showDialog(
       context: context,
@@ -474,6 +475,29 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   ),
                 ),
               ],
+              if (dialogError != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          dialogError!,
+                          style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
           actions: [
@@ -485,18 +509,19 @@ class _TransactionScreenState extends State<TransactionScreen> {
               ElevatedButton.icon(
                 onPressed: () {
                   if (!isGuestMode && selectedCustomer == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Pilih member terlebih dahulu!'), backgroundColor: Colors.orange),
-                    );
+                    setD(() {
+                      dialogError = 'Pilih member terlebih dahulu!';
+                    });
                     return;
                   }
                   final bayar = int.tryParse(bayarCtrl.text.replaceAll('.', '')) ?? 0;
                   if (bayar < _grandTotal) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Uang tunai tidak mencukupi!'), backgroundColor: Colors.redAccent),
-                    );
+                    setD(() {
+                      dialogError = 'Uang tunai tidak mencukupi!';
+                    });
                     return;
                   }
+                  dialogError = null;
                   Navigator.pop(ctx);
                   _processCheckout(bayar, kembalian, 'Cash', selectedCustomer, isGuestMode);
                 },
@@ -507,11 +532,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
               ElevatedButton.icon(
                 onPressed: () {
                   if (!isGuestMode && selectedCustomer == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Pilih member terlebih dahulu!'), backgroundColor: Colors.orange),
-                    );
+                    setD(() {
+                      dialogError = 'Pilih member terlebih dahulu!';
+                    });
                     return;
                   }
+                  dialogError = null;
                   _handleQrisPayment(
                     dialogCtx: ctx,
                     selectedCustomer: selectedCustomer,

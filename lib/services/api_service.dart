@@ -217,6 +217,25 @@ class ApiService {
     });
   }
 
+  static Future<void> postUpdateCashier(Map<String, dynamic> cashier) async {
+    await _firestore.collection('users').doc(cashier['id']).update({
+      "nama": cashier['nama'],
+      "role": cashier['role'],
+      "pin": cashier['pin'],
+    });
+  }
+
+  static Future<void> postUpdateMember(Map<String, dynamic> member) async {
+    await _firestore.collection('member').doc(member['id']).update({
+      "nama": member['nama'],
+      "telepon": member['telepon'],
+    });
+  }
+
+  static Future<void> postDeleteMember(String id) async {
+    await _firestore.collection('member').doc(id).delete();
+  }
+
   static Future<void> postAddCategory(String nama) async {
     await _firestore.collection('kategori').doc(nama).set({
       "nama": nama,

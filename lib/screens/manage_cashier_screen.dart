@@ -27,7 +27,19 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
     _namaCtrl.clear();
     _pinCtrl.clear();
     _selectedRole = 'KASIR';
+    _showCashierFormSheet(isEdit: false);
+  }
+
+  void _showEditCashierDialog(Map<String, dynamic> cashier) {
+    _namaCtrl.text = cashier['nama'] ?? '';
+    _pinCtrl.text = cashier['pin'] ?? '';
+    _selectedRole = cashier['role'] ?? 'KASIR';
+    _showCashierFormSheet(isEdit: true, existingCashier: cashier);
+  }
+
+  void _showCashierFormSheet({required bool isEdit, Map<String, dynamic>? existingCashier}) {
     _isPinObscure = true;
+    String? errorMessage;
 
     showModalBottomSheet(
       context: context,
@@ -48,7 +60,7 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Tambah Kasir Baru',
+                  Text(isEdit ? 'Edit Data Kasir' : 'Tambah Kasir Baru',
                       style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textDark)),
                   IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded, size: 20)),
                 ],
@@ -94,27 +106,63 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
                 ],
                 onChanged: (val) => setSheet(() => _selectedRole = val ?? 'KASIR'),
               ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          errorMessage!,
+                          style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
                 height: 44,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    if (_namaCtrl.text.trim().isEmpty || _pinCtrl.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Nama dan PIN wajib diisi!'), backgroundColor: Colors.redAccent),
-                      );
+                    final nama = _namaCtrl.text.trim();
+                    final pin = _pinCtrl.text.trim();
+
+                    if (nama.isEmpty || pin.isEmpty) {
+                      setSheet(() {
+                        errorMessage = 'Nama dan PIN wajib diisi!';
+                      });
                       return;
                     }
-                    DummyDatabase.addCashier(_namaCtrl.text.trim(), _pinCtrl.text.trim(), _selectedRole);
+                    errorMessage = null;
+
+                    if (isEdit && existingCashier != null) {
+                      DummyDatabase.updateCashier(existingCashier['id'], nama, pin, _selectedRole);
+                    } else {
+                      DummyDatabase.addCashier(nama, pin, _selectedRole);
+                    }
+
                     setState(() {});
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Kasir "${_namaCtrl.text.trim()}" ditambahkan!'), backgroundColor: AppColors.primary),
+                      SnackBar(
+                        content: Text(isEdit ? 'Data kasir diperbarui!' : 'Kasir "$nama" ditambahkan!'),
+                        backgroundColor: AppColors.primary,
+                      ),
                     );
                   },
-                  icon: const Icon(Icons.check_rounded, size: 18),
-                  label: Text('Simpan', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  icon: Icon(isEdit ? Icons.save_rounded : Icons.check_rounded, size: 18),
+                  label: Text(isEdit ? 'Simpan Perubahan' : 'Simpan', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -222,9 +270,19 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
                         ),
                       ],
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                      onPressed: () => _showDeleteDialog(cashier),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 20),
+                          onPressed: () => _showEditCashierDialog(cashier),
+                        ),
+                        if (!isAdmin)
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                            onPressed: () => _showDeleteDialog(cashier),
+                          ),
+                      ],
                     ),
                   ),
                 );

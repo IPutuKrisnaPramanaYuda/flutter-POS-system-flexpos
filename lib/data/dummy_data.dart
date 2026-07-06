@@ -78,27 +78,21 @@ class DummyDatabase {
     await StorageService.init();
 
     // 1. Muat Kasir/Users
-    // Selalu gunakan default jika cache kosong ATAU jika akun K001 (Krisna) PIN-nya lama
+    // Gunakan cache jika berisi data kasir (tidak kosong)
     final cachedUsers = await StorageService.getCache('users');
     bool cacheValid = false;
     if (cachedUsers.isNotEmpty) {
-      final adminUser = cachedUsers.where((u) => u['id'] == 'K001').firstOrNull;
-      // Reset cache jika nama atau PIN admin tidak sesuai default
-      final namaOk = adminUser?['nama']?.toString() == 'ADMIN';
-      final pinOk = adminUser?['pin']?.toString() == '12345';
-      if (adminUser != null && namaOk && pinOk) {
-        cacheValid = true;
-        cashierList = cachedUsers
-            .map(
-              (e) => <String, dynamic>{
-                'id': e['id']?.toString() ?? '',
-                'nama': e['nama']?.toString() ?? '',
-                'role': e['role']?.toString() ?? '',
-                'pin': e['pin']?.toString() ?? '',
-              },
-            )
-            .toList();
-      }
+      cacheValid = true;
+      cashierList = cachedUsers
+          .map(
+            (e) => <String, dynamic>{
+              'id': e['id']?.toString() ?? '',
+              'nama': e['nama']?.toString() ?? '',
+              'role': e['role']?.toString() ?? '',
+              'pin': e['pin']?.toString() ?? '',
+            },
+          )
+          .toList();
     }
 
     if (!cacheValid) {
@@ -263,6 +257,22 @@ class DummyDatabase {
     ApiService.postDeleteCashier(id);
   }
 
+  static Future<void> updateCashier(String id, String nama, String pin, String role) async {
+    final index = cashierList.indexWhere((c) => c['id'] == id);
+    if (index != -1) {
+      final updatedCashier = <String, dynamic>{
+        'id': id,
+        'nama': nama,
+        'role': role,
+        'pin': pin,
+      };
+      cashierList[index] = updatedCashier;
+      await StorageService.setCache('users', cashierList);
+      // Kirim mutasi secara asinkron ke server
+      ApiService.postUpdateCashier(updatedCashier);
+    }
+  }
+
   // ==========================================
   // HELPER METHODS (MENU)
   // ==========================================
@@ -330,6 +340,28 @@ class DummyDatabase {
     await StorageService.setCache('member', memberList);
     // Kirim mutasi secara asinkron ke server
     ApiService.postAddMember(member);
+  }
+
+  static Future<void> updateMember(String id, String nama, String telepon) async {
+    final index = memberList.indexWhere((m) => m['id'] == id);
+    if (index != -1) {
+      final updatedMember = <String, dynamic>{
+        'id': id,
+        'nama': nama,
+        'telepon': telepon,
+      };
+      memberList[index] = updatedMember;
+      await StorageService.setCache('member', memberList);
+      // Kirim mutasi secara asinkron ke server
+      ApiService.postUpdateMember(updatedMember);
+    }
+  }
+
+  static Future<void> deleteMember(String id) async {
+    memberList.removeWhere((member) => member['id'] == id);
+    await StorageService.setCache('member', memberList);
+    // Kirim mutasi secara asinkron ke server
+    ApiService.postDeleteMember(id);
   }
 
   // ==========================================

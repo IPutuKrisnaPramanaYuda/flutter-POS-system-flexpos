@@ -147,6 +147,8 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
   }
 
   void _showMenuFormSheet({required bool isEdit, Map<String, dynamic>? existingMenu}) {
+    String? errorMessage;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -230,6 +232,29 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                   });
                 },
               ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          errorMessage!,
+                          style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -241,14 +266,12 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                     final stok = int.tryParse(_stokCtrl.text.trim()) ?? 0;
 
                     if (nama.isEmpty || harga <= 0 || stok < 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Isi semua field dengan benar!'),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
+                      setSheetState(() {
+                        errorMessage = 'Isi semua field dengan benar!';
+                      });
                       return;
                     }
+                    errorMessage = null;
 
                     if (isEdit && existingMenu != null) {
                       DummyDatabase.updateMenu(existingMenu['id'], nama, harga, stok, _selectedCategory);
