@@ -69,76 +69,80 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheet) => Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isEdit ? 'Edit Data Member' : 'Daftarkan Member Baru',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+        builder: (context, setSheet) {
+          final isDarkSheet = Theme.of(context).brightness == Brightness.dark;
+          final sheetTextColor = isDarkSheet ? Colors.white : AppColors.textDark;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEdit ? 'Edit Data Member' : 'Daftarkan Member Baru',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: sheetTextColor,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _namaCtrl,
+                  style: GoogleFonts.inter(fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Lengkap Pelanggan',
+                    prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _teleponCtrl,
+                  keyboardType: TextInputType.phone,
+                  style: GoogleFonts.inter(fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: 'Nomor Telepon (WhatsApp)',
+                    prefixIcon: Icon(Icons.phone_outlined, color: AppColors.primary, size: 20),
+                  ),
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDarkSheet ? Colors.red.withAlpha(20) : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDarkSheet ? Colors.red.withAlpha(40) : Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            errorMessage!,
+                            style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    icon: const Icon(Icons.close_rounded, size: 20),
-                  ),
                 ],
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _namaCtrl,
-                style: GoogleFonts.inter(fontSize: 13),
-                decoration: const InputDecoration(
-                  labelText: 'Nama Lengkap Pelanggan',
-                  prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _teleponCtrl,
-                keyboardType: TextInputType.phone,
-                style: GoogleFonts.inter(fontSize: 13),
-                decoration: const InputDecoration(
-                  labelText: 'Nomor Telepon (WhatsApp)',
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppColors.primary, size: 20),
-                ),
-              ),
-              if (errorMessage != null) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          errorMessage!,
-                          style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -176,17 +180,25 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
     final members = DummyDatabase.memberList;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkCard : Colors.white;
+    final cardBorder = isDark ? Colors.white.withAlpha(15) : Colors.grey.shade200;
+    final textColor = isDark ? Colors.white : AppColors.textDark;
+    final textMedColor = isDark ? Colors.white60 : AppColors.textMed;
+    final primaryColor = isDark ? AppColors.primaryLight : AppColors.primary;
+    final chipBg = isDark ? AppColors.primary.withAlpha(40) : AppColors.chipBg;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Kelola Member'),
       ),
@@ -202,9 +214,9 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
             margin: const EdgeInsets.fromLTRB(14, 14, 14, 10),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: cardBorder),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withAlpha(5),
@@ -218,22 +230,22 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.chipBg,
+                    color: chipBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.people_alt_rounded, color: AppColors.primary, size: 22),
+                  child: Icon(Icons.people_alt_rounded, color: primaryColor, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total Member Terdaftar', style: GoogleFonts.inter(color: AppColors.textMed, fontSize: 11)),
+                    Text('Total Member Terdaftar', style: GoogleFonts.inter(color: textMedColor, fontSize: 11)),
                     Text(
                       '${members.length} Pelanggan',
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
+                        color: textColor,
                       ),
                     ),
                   ],
@@ -250,7 +262,7 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
                       children: [
                         Icon(Icons.people_alt_rounded, size: 48, color: Colors.grey.shade300),
                         const SizedBox(height: 10),
-                        Text('Belum ada member terdaftar', style: GoogleFonts.inter(color: AppColors.textMed)),
+                        Text('Belum ada member terdaftar', style: GoogleFonts.inter(color: textMedColor)),
                       ],
                     ),
                   )
@@ -262,19 +274,19 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
                       final member = members[index];
                       return Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: cardBorder),
                         ),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           leading: CircleAvatar(
                             radius: 18,
-                            backgroundColor: AppColors.chipBg,
+                            backgroundColor: chipBg,
                             child: Text(
                               member['nama'].toString().substring(0, 1).toUpperCase(),
                               style: GoogleFonts.inter(
-                                color: AppColors.primary,
+                                color: primaryColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
@@ -282,20 +294,20 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
                           ),
                           title: Text(
                             member['nama'],
-                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('ID: ${member['id']}', style: GoogleFonts.inter(color: AppColors.textMed, fontSize: 10)),
+                              Text('ID: ${member['id']}', style: GoogleFonts.inter(color: textMedColor, fontSize: 10)),
                               const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  const Icon(Icons.phone_outlined, size: 12, color: AppColors.primary),
+                                  Icon(Icons.phone_outlined, size: 12, color: primaryColor),
                                   const SizedBox(width: 4),
                                   Text(
                                     member['telepon'].toString(),
-                                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.textDark),
+                                    style: GoogleFonts.inter(fontSize: 11, color: textColor),
                                   ),
                                 ],
                               ),
@@ -305,7 +317,7 @@ class _ManageMemberScreenState extends State<ManageMemberScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 20),
+                                icon: Icon(Icons.edit_outlined, color: primaryColor, size: 20),
                                 onPressed: () => _showEditMemberDialog(member),
                               ),
                               IconButton(

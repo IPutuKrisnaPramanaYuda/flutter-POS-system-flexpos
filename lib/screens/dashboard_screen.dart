@@ -142,6 +142,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               fontWeight: FontWeight.w700,
                               color: Colors.white),
                         ),
+                        if (user?['id'] != null) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            'ID: ${user!['id']}',
+                            style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white70),
+                          ),
+                        ],
                       ],
                     ),
                   ),

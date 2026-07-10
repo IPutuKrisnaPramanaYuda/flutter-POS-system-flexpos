@@ -172,383 +172,394 @@ class _TransactionScreenState extends State<TransactionScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setD) => AlertDialog(
-          scrollable: true,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'Pembayaran & Pelanggan',
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.textDark, fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Pilih Pelanggan (Guest vs Member)
-              Text('Pilih Tipe Pelanggan:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textMed)),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setD(() {
-                          isGuestMode = true;
-                          selectedCustomer = null;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isGuestMode ? AppColors.primary : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: isGuestMode ? Colors.transparent : Colors.grey.shade300),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(Icons.person_outline_rounded,
-                                color: isGuestMode ? Colors.white : Colors.grey, size: 18),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Guest',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                color: isGuestMode ? Colors.white : Colors.grey,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setD(() {
-                          isGuestMode = false;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: !isGuestMode ? AppColors.primary : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: !isGuestMode ? Colors.transparent : Colors.grey.shade300),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(Icons.card_membership_rounded,
-                                color: !isGuestMode ? Colors.white : Colors.grey, size: 18),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Member',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                color: !isGuestMode ? Colors.white : Colors.grey,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
+        builder: (context, setD) {
+          final isDarkDlg = Theme.of(context).brightness == Brightness.dark;
+          final dlgTextColor = isDarkDlg ? Colors.white : AppColors.textDark;
+          final dlgTextMedColor = isDarkDlg ? Colors.white60 : AppColors.textMed;
+          final dlgCardColor = isDarkDlg ? AppColors.darkCard : Colors.white;
+          final dlgCardBorder = isDarkDlg ? Colors.white.withAlpha(15) : Colors.grey.shade200;
+          final optionBgColor = isDarkDlg ? Colors.white10 : Colors.grey.shade100;
+          final optionBorderColor = isDarkDlg ? Colors.white.withAlpha(15) : Colors.grey.shade300;
+          final chipBg = isDarkDlg ? AppColors.primary.withAlpha(40) : AppColors.chipBg;
 
-              // Jika mode member, tampilkan input pencarian member
-              if (!isGuestMode) ...[
-                if (selectedCustomer != null)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withAlpha(20),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green.shade200),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(selectedCustomer?['nama'], style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12)),
-                            Text('ID: ${selectedCustomer?['id']}', style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMed)),
-                          ],
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setD(() {
-                              selectedCustomer = null;
-                            });
-                          },
-                          child: const Icon(Icons.cancel_rounded, color: Colors.redAccent, size: 20),
-                        ),
-                      ],
-                    ),
-                  )
-                else ...[
-                  TextField(
-                    controller: memberIdCtrl,
-                    style: GoogleFonts.inter(fontSize: 12),
-                    decoration: InputDecoration(
-                      labelText: 'Cari Nama / ID Member',
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 18),
-                      errorText: searchError.isEmpty ? null : searchError,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 80,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade200),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: DummyDatabase.memberList.length,
-                      itemBuilder: (ctx, i) {
-                        final m = DummyDatabase.memberList[i];
-                        return ListTile(
-                          dense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                          title: Text(m['nama'], style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
-                          subtitle: Text(m['id'], style: GoogleFonts.inter(fontSize: 10)),
-                          onTap: () {
-                            setD(() {
-                              selectedCustomer = m;
-                              searchError = '';
-                              memberIdCtrl.clear();
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
-              ],
-              
-              const Divider(),
-              const SizedBox(height: 6),
-
-              // 2. Info Grand Total
-              Container(
-                padding: const EdgeInsets.all(10),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.chipBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
+          return AlertDialog(
+            scrollable: true,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              'Pembayaran & Pelanggan',
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: dlgTextColor, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Pilih Pelanggan (Guest vs Member)
+                Text('Pilih Tipe Pelanggan:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: dlgTextMedColor)),
+                const SizedBox(height: 6),
+                Row(
                   children: [
-                    Text('Grand Total', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMed)),
-                    const SizedBox(height: 2),
-                    Text(
-                      _formatRupiah(_grandTotal),
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setD(() {
+                            isGuestMode = true;
+                            selectedCustomer = null;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isGuestMode ? AppColors.primary : optionBgColor,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: isGuestMode ? Colors.transparent : optionBorderColor),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.person_outline_rounded,
+                                  color: isGuestMode ? Colors.white : Colors.grey, size: 18),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Guest',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  color: isGuestMode ? Colors.white : Colors.grey,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setD(() {
+                            isGuestMode = false;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: !isGuestMode ? AppColors.primary : optionBgColor,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: !isGuestMode ? Colors.transparent : optionBorderColor),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.card_membership_rounded,
+                                  color: !isGuestMode ? Colors.white : Colors.grey, size: 18),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Member',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  color: !isGuestMode ? Colors.white : Colors.grey,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              // 3. Pilihan Metode Pembayaran
-              Text('Pilih Metode Pembayaran:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textMed)),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        setD(() {
-                          selectedMethod = 'Cash';
-                        });
-                      },
-                      icon: Icon(Icons.money_rounded, size: 16, color: selectedMethod == 'Cash' ? Colors.white : AppColors.primary),
-                      label: Text('Tunai / Cash', style: GoogleFonts.inter(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: selectedMethod == 'Cash' ? AppColors.primary : Colors.white,
-                        foregroundColor: selectedMethod == 'Cash' ? Colors.white : AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        setD(() {
-                          selectedMethod = 'QRIS';
-                          bayarCtrl.text = _grandTotal.toString();
-                          kembalian = 0;
-                        });
-                      },
-                      icon: Icon(Icons.qr_code_scanner_rounded, size: 16, color: selectedMethod == 'QRIS' ? Colors.white : AppColors.primary),
-                      label: Text('QRIS Digital', style: GoogleFonts.inter(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: selectedMethod == 'QRIS' ? AppColors.primary : Colors.white,
-                        foregroundColor: selectedMethod == 'QRIS' ? Colors.white : AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              if (selectedMethod == 'Cash') ...[
-                TextField(
-                  controller: bayarCtrl,
-                  keyboardType: TextInputType.number,
-                  style: GoogleFonts.inter(fontSize: 13),
-                  decoration: const InputDecoration(
-                    labelText: 'Uang Tunai Diterima',
-                    prefixIcon: Icon(Icons.payments_outlined, color: AppColors.primary, size: 20),
-                    prefixText: 'Rp ',
-                  ),
-                  onChanged: (val) {
-                    final bayar = int.tryParse(val.replaceAll('.', '')) ?? 0;
-                    setD(() => kembalian = bayar - _grandTotal);
-                  },
-                ),
                 const SizedBox(height: 10),
+
+                // Jika mode member, tampilkan input pencarian member
+                if (!isGuestMode) ...[
+                  if (selectedCustomer != null)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withAlpha(20),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(selectedCustomer?['nama'], style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12)),
+                              Text('ID: ${selectedCustomer?['id']}', style: GoogleFonts.inter(fontSize: 10, color: dlgTextMedColor)),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setD(() {
+                                selectedCustomer = null;
+                              });
+                            },
+                            child: const Icon(Icons.cancel_rounded, color: Colors.redAccent, size: 20),
+                          ),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    TextField(
+                      controller: memberIdCtrl,
+                      style: GoogleFonts.inter(fontSize: 12),
+                      decoration: InputDecoration(
+                        labelText: 'Cari Nama / ID Member',
+                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 18),
+                        errorText: searchError.isEmpty ? null : searchError,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 80,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: dlgCardBorder),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: DummyDatabase.memberList.length,
+                        itemBuilder: (ctx, i) {
+                          final m = DummyDatabase.memberList[i];
+                          return ListTile(
+                            dense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                            title: Text(m['nama'], style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                            subtitle: Text(m['id'], style: GoogleFonts.inter(fontSize: 10)),
+                            onTap: () {
+                              setD(() {
+                                selectedCustomer = m;
+                                searchError = '';
+                                memberIdCtrl.clear();
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                ],
+                
+                const Divider(),
+                const SizedBox(height: 6),
+
+                // 2. Info Grand Total
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: kembalian >= 0 ? Colors.green.withAlpha(20) : Colors.red.withAlpha(20),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: kembalian >= 0 ? Colors.green.shade200 : Colors.red.shade200,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Kembalian:', style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12)),
-                      Text(
-                        kembalian < 0 ? 'Kurang Rp ${-kembalian}' : _formatRupiah(kembalian),
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: kembalian >= 0 ? Colors.green.shade700 : Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ] else ...[
-                // QRIS TANPA GAMBAR QR
-                Container(
-                  padding: const EdgeInsets.all(14),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade300),
+                    color: chipBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.qr_code_scanner_rounded, size: 40, color: AppColors.primary),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Silakan scan QRIS di layar EDC/Monitor Anda.',
-                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMed),
-                        textAlign: TextAlign.center,
-                      ),
+                      Text('Grand Total', style: GoogleFonts.inter(fontSize: 11, color: dlgTextMedColor)),
                       const SizedBox(height: 2),
                       Text(
-                        'Transaksi akan otomatis lunas sebesar:',
-                        style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMed),
-                      ),
-                      Text(
                         _formatRupiah(_grandTotal),
-                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              if (dialogError != null) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          dialogError!,
-                          style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+
+                // 3. Pilihan Metode Pembayaran
+                Text('Pilih Metode Pembayaran:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: dlgTextMedColor)),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setD(() {
+                            selectedMethod = 'Cash';
+                          });
+                        },
+                        icon: Icon(Icons.money_rounded, size: 16, color: selectedMethod == 'Cash' ? Colors.white : AppColors.primary),
+                        label: Text('Tunai / Cash', style: GoogleFonts.inter(fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: selectedMethod == 'Cash' ? AppColors.primary : (isDarkDlg ? Colors.white10 : Colors.white),
+                          foregroundColor: selectedMethod == 'Cash' ? Colors.white : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setD(() {
+                            selectedMethod = 'QRIS';
+                            bayarCtrl.text = _grandTotal.toString();
+                            kembalian = 0;
+                          });
+                        },
+                        icon: Icon(Icons.qr_code_scanner_rounded, size: 16, color: selectedMethod == 'QRIS' ? Colors.white : AppColors.primary),
+                        label: Text('QRIS Digital', style: GoogleFonts.inter(fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: selectedMethod == 'QRIS' ? AppColors.primary : (isDarkDlg ? Colors.white10 : Colors.white),
+                          foregroundColor: selectedMethod == 'QRIS' ? Colors.white : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                if (selectedMethod == 'Cash') ...[
+                  TextField(
+                    controller: bayarCtrl,
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.inter(fontSize: 13),
+                    decoration: const InputDecoration(
+                      labelText: 'Uang Tunai Diterima',
+                      prefixIcon: Icon(Icons.payments_outlined, color: AppColors.primary, size: 20),
+                      prefixText: 'Rp ',
+                    ),
+                    onChanged: (val) {
+                      final bayar = int.tryParse(val.replaceAll('.', '')) ?? 0;
+                      setD(() => kembalian = bayar - _grandTotal);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: kembalian >= 0 ? Colors.green.withAlpha(20) : Colors.red.withAlpha(20),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: kembalian >= 0 ? Colors.green.shade200 : Colors.red.shade200,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Kembalian:', style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12)),
+                        Text(
+                          kembalian < 0 ? 'Kurang Rp ${-kembalian}' : _formatRupiah(kembalian),
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: kembalian >= 0 ? Colors.green.shade700 : Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  // QRIS TANPA GAMBAR QR
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: dlgCardColor,
+                      border: Border.all(color: dlgCardBorder),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.qr_code_scanner_rounded, size: 40, color: AppColors.primary),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Silakan scan QRIS di layar EDC/Monitor Anda.',
+                          style: GoogleFonts.inter(fontSize: 11, color: dlgTextMedColor),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Transaksi akan otomatis lunas sebesar:',
+                          style: GoogleFonts.inter(fontSize: 10, color: dlgTextMedColor),
+                        ),
+                        Text(
+                          _formatRupiah(_grandTotal),
+                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (dialogError != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDarkDlg ? Colors.red.withAlpha(20) : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDarkDlg ? Colors.red.withAlpha(40) : Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            dialogError!,
+                            style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Batal', style: GoogleFonts.inter()),
             ),
-            if (selectedMethod == 'Cash')
-              ElevatedButton.icon(
-                onPressed: () {
-                  if (!isGuestMode && selectedCustomer == null) {
-                    setD(() {
-                      dialogError = 'Pilih member terlebih dahulu!';
-                    });
-                    return;
-                  }
-                  final bayar = int.tryParse(bayarCtrl.text.replaceAll('.', '')) ?? 0;
-                  if (bayar < _grandTotal) {
-                    setD(() {
-                      dialogError = 'Uang tunai tidak mencukupi!';
-                    });
-                    return;
-                  }
-                  dialogError = null;
-                  Navigator.pop(ctx);
-                  _processCheckout(bayar, kembalian, 'Cash', selectedCustomer, isGuestMode);
-                },
-                icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-                label: Text('Bayar Tunai', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-              )
-            else
-              ElevatedButton.icon(
-                onPressed: () {
-                  if (!isGuestMode && selectedCustomer == null) {
-                    setD(() {
-                      dialogError = 'Pilih member terlebih dahulu!';
-                    });
-                    return;
-                  }
-                  dialogError = null;
-                  _handleQrisPayment(
-                    dialogCtx: ctx,
-                    selectedCustomer: selectedCustomer,
-                    isGuestMode: isGuestMode,
-                  );
-                },
-                icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
-                label: Text('Bayar QRIS', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Batal', style: GoogleFonts.inter()),
               ),
-          ],
-        ),
+              if (selectedMethod == 'Cash')
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (!isGuestMode && selectedCustomer == null) {
+                      setD(() {
+                        dialogError = 'Pilih member terlebih dahulu!';
+                      });
+                      return;
+                    }
+                    final bayar = int.tryParse(bayarCtrl.text.replaceAll('.', '')) ?? 0;
+                    if (bayar < _grandTotal) {
+                      setD(() {
+                        dialogError = 'Uang tunai tidak mencukupi!';
+                      });
+                      return;
+                    }
+                    dialogError = null;
+                    Navigator.pop(ctx);
+                    _processCheckout(bayar, kembalian, 'Cash', selectedCustomer, isGuestMode);
+                  },
+                  icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                  label: Text('Bayar Tunai', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                )
+              else
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (!isGuestMode && selectedCustomer == null) {
+                      setD(() {
+                        dialogError = 'Pilih member terlebih dahulu!';
+                      });
+                      return;
+                    }
+                    dialogError = null;
+                    _handleQrisPayment(
+                      dialogCtx: ctx,
+                      selectedCustomer: selectedCustomer,
+                      isGuestMode: isGuestMode,
+                    );
+                  },
+                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
+                  label: Text('Bayar QRIS', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -557,32 +568,35 @@ class _TransactionScreenState extends State<TransactionScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                message,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-            ],
+                const SizedBox(height: 20),
+                Text(
+                  message,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : AppColors.textDark,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1135,7 +1149,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
                 SizedBox(
                   height: 40,
                   child: ElevatedButton.icon(
@@ -1152,14 +1165,16 @@ class _TransactionScreenState extends State<TransactionScreen> {
       ),
     );
   }
-
   // ──────────────────────────────────────────────
   // Panel katalog menu (kiri/atas)
   // ──────────────────────────────────────────────
   Widget _buildCatalogPanel(
-      List<Map<String, dynamic>> filteredMenus, {
-      bool isLandscape = false,
+    List<Map<String, dynamic>> filteredMenus, {
+    bool isLandscape = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : AppColors.textDark;
+
     return Column(
       children: [
         // ── Search & Table input berdampingan ──
@@ -1201,7 +1216,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   height: 36,
                   child: TextField(
                     controller: _tableCtrl,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.text,
                     style: GoogleFonts.inter(fontSize: 12),
                     decoration: const InputDecoration(
                       labelText: 'No. Meja',
@@ -1234,7 +1249,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     catName,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: isActive ? Colors.white : AppColors.textDark,
+                      color: isActive ? Colors.white : textColor,
                       fontWeight:
                           isActive ? FontWeight.bold : FontWeight.normal,
                     ),
@@ -1242,11 +1257,11 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   selected: isActive,
                   selectedColor: AppColors.primary,
                   checkmarkColor: Colors.white,
-                  backgroundColor: Colors.white,
+                  backgroundColor: isDark ? Colors.white10 : Colors.white,
                   side: BorderSide(
                       color: isActive
                           ? Colors.transparent
-                          : Colors.grey.shade300),
+                          : (isDark ? Colors.white.withAlpha(15) : Colors.grey.shade300)),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
                   shape: RoundedRectangleBorder(
@@ -1304,7 +1319,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
         final isLandscape = orientation == Orientation.landscape;
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             title: const Text('Transaksi Baru'),
             actions: [

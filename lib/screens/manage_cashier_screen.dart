@@ -48,87 +48,92 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheet) => Padding(
-          padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(isEdit ? 'Edit Data Kasir' : 'Tambah Kasir Baru',
-                      style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                  IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded, size: 20)),
-                ],
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _namaCtrl,
-                style: GoogleFonts.inter(fontSize: 13),
-                decoration: const InputDecoration(
-                  labelText: 'Nama Kasir',
-                  prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
+        builder: (context, setSheet) {
+          final isDarkSheet = Theme.of(context).brightness == Brightness.dark;
+          final sheetTextColor = isDarkSheet ? Colors.white : AppColors.textDark;
+          final sheetTextMedColor = isDarkSheet ? Colors.white60 : AppColors.textMed;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(isEdit ? 'Edit Data Kasir' : 'Tambah Kasir Baru',
+                        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: sheetTextColor)),
+                    IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded, size: 20)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _pinCtrl,
-                obscureText: _isPinObscure,
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.inter(fontSize: 13),
-                decoration: InputDecoration(
-                  labelText: 'PIN (4-6 digit)',
-                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPinObscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: AppColors.textMed, size: 20,
-                    ),
-                    onPressed: () => setSheet(() => _isPinObscure = !_isPinObscure),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _namaCtrl,
+                  style: GoogleFonts.inter(fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Kasir',
+                    prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedRole,
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.textDark),
-                decoration: const InputDecoration(
-                  labelText: 'Role',
-                  prefixIcon: Icon(Icons.admin_panel_settings_outlined, color: AppColors.primary, size: 20),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'KASIR', child: Text('KASIR')),
-                  DropdownMenuItem(value: 'ADMIN', child: Text('ADMIN')),
-                ],
-                onChanged: (val) => setSheet(() => _selectedRole = val ?? 'KASIR'),
-              ),
-              if (errorMessage != null) ...[
                 const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          errorMessage!,
-                          style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
+                TextField(
+                  controller: _pinCtrl,
+                  obscureText: _isPinObscure,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.inter(fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'PIN (4-6 digit)',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPinObscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: sheetTextMedColor, size: 20,
                       ),
-                    ],
+                      onPressed: () => setSheet(() => _isPinObscure = !_isPinObscure),
+                    ),
                   ),
                 ),
-              ],
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedRole,
+                  style: GoogleFonts.inter(fontSize: 13, color: sheetTextColor),
+                  decoration: const InputDecoration(
+                    labelText: 'Role',
+                    prefixIcon: Icon(Icons.admin_panel_settings_outlined, color: AppColors.primary, size: 20),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'KASIR', child: Text('KASIR')),
+                    DropdownMenuItem(value: 'ADMIN', child: Text('ADMIN')),
+                  ],
+                  onChanged: (val) => setSheet(() => _selectedRole = val ?? 'KASIR'),
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDarkSheet ? Colors.red.withAlpha(20) : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDarkSheet ? Colors.red.withAlpha(40) : Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            errorMessage!,
+                            style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -141,6 +146,20 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
                     if (nama.isEmpty || pin.isEmpty) {
                       setSheet(() {
                         errorMessage = 'Nama dan PIN wajib diisi!';
+                      });
+                      return;
+                    }
+
+                    final nameExists = DummyDatabase.cashierList.any((c) {
+                      if (isEdit && existingCashier != null) {
+                        if (c['id'] == existingCashier['id']) return false;
+                      }
+                      return c['nama'].toString().toLowerCase() == nama.toLowerCase();
+                    });
+
+                    if (nameExists) {
+                      setSheet(() {
+                        errorMessage = 'Nama kasir "$nama" sudah terdaftar!';
                       });
                       return;
                     }
@@ -167,10 +186,11 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   void _showDeleteDialog(Map<String, dynamic> cashier) {
     showDialog(
@@ -201,9 +221,14 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
   @override
   Widget build(BuildContext context) {
     final cashiers = DummyDatabase.cashierList;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkCard : Colors.white;
+    final cardBorder = isDark ? Colors.white.withAlpha(15) : Colors.grey.shade200;
+    final textColor = isDark ? Colors.white : AppColors.textDark;
+    final textMedColor = isDark ? Colors.white60 : AppColors.textMed;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(title: const Text('Kelola Kasir')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddCashierSheet,
@@ -217,7 +242,7 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
                 children: [
                   Icon(Icons.manage_accounts_rounded, size: 48, color: Colors.grey.shade300),
                   const SizedBox(height: 10),
-                  Text('Belum ada data kasir', style: GoogleFonts.inter(color: AppColors.textMed)),
+                  Text('Belum ada data kasir', style: GoogleFonts.inter(color: textMedColor)),
                 ],
               ),
             )
@@ -228,35 +253,42 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
               itemBuilder: (context, index) {
                 final cashier = cashiers[index];
                 final isAdmin = cashier['role'] == 'ADMIN';
+                final avatarBg = isAdmin 
+                    ? (isDark ? Colors.orange.shade900.withAlpha(40) : const Color(0xFFFFF3E0)) 
+                    : (isDark ? AppColors.primary.withAlpha(40) : AppColors.chipBg);
+                final avatarFg = isAdmin 
+                    ? (isDark ? Colors.orange.shade300 : Colors.orange.shade700) 
+                    : (isDark ? AppColors.primaryLight : AppColors.primary);
+
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: cardBorder),
                   ),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     leading: CircleAvatar(
                       radius: 20,
-                      backgroundColor: isAdmin ? const Color(0xFFFFF3E0) : AppColors.chipBg,
+                      backgroundColor: avatarBg,
                       child: Icon(
                         isAdmin ? Icons.verified_rounded : Icons.badge_rounded,
-                        color: isAdmin ? Colors.orange.shade700 : AppColors.primary,
+                        color: avatarFg,
                         size: 18,
                       ),
                     ),
                     title: Text(cashier['nama'],
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: textColor)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('ID: ${cashier['id']}',
-                            style: GoogleFonts.inter(color: AppColors.textMed, fontSize: 11)),
+                            style: GoogleFonts.inter(color: textMedColor, fontSize: 11)),
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: isAdmin ? const Color(0xFFFFF3E0) : AppColors.chipBg,
+                            color: avatarBg,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -264,7 +296,7 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: isAdmin ? Colors.orange.shade700 : AppColors.primary,
+                              color: avatarFg,
                             ),
                           ),
                         ),
@@ -274,7 +306,7 @@ class _ManageCashierScreenState extends State<ManageCashierScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 20),
+                          icon: Icon(Icons.edit_outlined, color: isDark ? AppColors.primaryLight : AppColors.primary, size: 20),
                           onPressed: () => _showEditCashierDialog(cashier),
                         ),
                         if (!isAdmin)

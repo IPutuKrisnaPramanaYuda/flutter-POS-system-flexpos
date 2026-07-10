@@ -257,95 +257,102 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Detail Penjualan',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Invoice: $idTransaksi', style: GoogleFonts.inter(fontSize: 12, color: AppColors.textMed)),
-              Text('Tanggal: ${tx['tanggal']}', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMed)),
-              const SizedBox(height: 8),
-              const Divider(),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: details.length,
-                  itemBuilder: (context, i) {
-                    final item = details[i];
-                    final menuName = DummyDatabase.menuList.firstWhere(
-                      (m) => m['id'] == item['id_menu'],
-                      orElse: () => {"nama": "Produk Terhapus"},
-                    )['nama'];
-                    final qty = item['qty'];
-                    final sub = int.tryParse(item['subtotal'].toString()) ?? 0;
+      builder: (ctx) {
+        final isDarkDlg = Theme.of(ctx).brightness == Brightness.dark;
+        final dlgTextColor = isDarkDlg ? Colors.white : AppColors.textDark;
+        final dlgTextMedColor = isDarkDlg ? Colors.white60 : AppColors.textMed;
+        final dlgPrimaryColor = isDarkDlg ? AppColors.primaryLight : AppColors.primary;
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '$menuName (x$qty)',
-                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textDark),
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'Detail Penjualan',
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Invoice: $idTransaksi', style: GoogleFonts.inter(fontSize: 12, color: dlgTextMedColor)),
+                Text('Tanggal: ${tx['tanggal']}', style: GoogleFonts.inter(fontSize: 11, color: dlgTextMedColor)),
+                const SizedBox(height: 8),
+                const Divider(),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: details.length,
+                    itemBuilder: (context, i) {
+                      final item = details[i];
+                      final menuName = DummyDatabase.menuList.firstWhere(
+                        (m) => m['id'] == item['id_menu'],
+                        orElse: () => {"nama": "Produk Terhapus"},
+                      )['nama'];
+                      final qty = item['qty'];
+                      final sub = int.tryParse(item['subtotal'].toString()) ?? 0;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '$menuName (x$qty)',
+                                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: dlgTextColor),
+                              ),
                             ),
-                          ),
-                          Text(
-                            _formatRupiah(sub),
-                            style: GoogleFonts.inter(fontSize: 12, color: AppColors.textMed),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                            Text(
+                              _formatRupiah(sub),
+                              style: GoogleFonts.inter(fontSize: 12, color: dlgTextMedColor),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total Belanja:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(
+                      _formatRupiah(int.tryParse(tx['total_harga'].toString()) ?? 0),
+                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: dlgPrimaryColor),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showReprintDialog(tx, details);
+              },
+              icon: const Icon(Icons.receipt_long_rounded, size: 14),
+              label: Text('Salinan Struk', style: GoogleFonts.inter(fontSize: 11)),
+            ),
+            if (isAdmin)
+              ElevatedButton.icon(
+                onPressed: () => _confirmDeleteTransaction(tx),
+                icon: const Icon(Icons.delete_forever_rounded, size: 14),
+                label: Text('Hapus', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 11)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
                 ),
               ),
-              const Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total Belanja:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
-                  Text(
-                    _formatRupiah(int.tryParse(tx['total_harga'].toString()) ?? 0),
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _showReprintDialog(tx, details);
-            },
-            icon: const Icon(Icons.receipt_long_rounded, size: 14),
-            label: Text('Salinan Struk', style: GoogleFonts.inter(fontSize: 11)),
-          ),
-          if (isAdmin)
-            ElevatedButton.icon(
-              onPressed: () => _confirmDeleteTransaction(tx),
-              icon: const Icon(Icons.delete_forever_rounded, size: 14),
-              label: Text('Hapus', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 11)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-              ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Tutup', style: GoogleFonts.inter(fontSize: 12)),
             ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Tutup', style: GoogleFonts.inter(fontSize: 12)),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -414,10 +421,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     // 3. Kalkulasikan daftar menu terlaris secara dinamis
     final topSellingMenus = _calculateTopSellingMenus(filteredHistory);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkCard : Colors.white;
+    final cardBorder = isDark ? Colors.white.withAlpha(15) : Colors.grey.shade200;
+    final textColor = isDark ? Colors.white : AppColors.textDark;
+    final textMedColor = isDark ? Colors.white60 : AppColors.textMed;
+    final primaryColor = isDark ? AppColors.primaryLight : AppColors.primary;
+    final chipBg = isDark ? AppColors.primary.withAlpha(40) : AppColors.chipBg;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text('Riwayat & Laporan'),
           bottom: TabBar(
@@ -436,7 +451,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           children: [
             // ── Horizontal Days Filter (Berlaku global untuk kedua tab) ──
             Container(
-              color: Colors.white,
+              color: cardColor,
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: SizedBox(
                 height: 32,
@@ -452,15 +467,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           day,
                           style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: isActive ? Colors.white : AppColors.textDark,
+                            color: isActive ? Colors.white : textColor,
                             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                         selected: isActive,
                         selectedColor: AppColors.primary,
                         checkmarkColor: Colors.white,
-                        backgroundColor: Colors.grey.shade100,
-                        side: BorderSide(color: isActive ? Colors.transparent : Colors.grey.shade200),
+                        backgroundColor: isDark ? Colors.white10 : Colors.grey.shade100,
+                        side: BorderSide(color: isActive ? Colors.transparent : cardBorder),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         onSelected: (_) {
@@ -524,7 +539,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                   children: [
                                     Icon(Icons.receipt_long_rounded, size: 48, color: Colors.grey.shade300),
                                     const SizedBox(height: 10),
-                                    Text('Tidak ada riwayat transaksi', style: GoogleFonts.inter(color: AppColors.textMed)),
+                                    Text('Tidak ada riwayat transaksi', style: GoogleFonts.inter(color: textMedColor)),
                                   ],
                                 ),
                               )
@@ -552,9 +567,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                                   return Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: cardColor,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey.shade200),
+                                      border: Border.all(color: cardBorder),
                                     ),
                                     child: ListTile(
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -563,11 +578,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                         children: [
                                           Text(
                                             tx['id_transaksi'],
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
                                           ),
                                           Text(
                                             _formatRupiah(total),
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: primaryColor),
                                           ),
                                         ],
                                       ),
@@ -580,11 +595,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                             children: [
                                               Text(
                                                 'Pelanggan: $customerName',
-                                                style: GoogleFonts.inter(fontSize: 11, color: AppColors.textDark),
+                                                style: GoogleFonts.inter(fontSize: 11, color: textColor),
                                               ),
                                               Text(
                                                 tx['tanggal'].toString().split(' ')[0],
-                                                style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMed),
+                                                style: GoogleFonts.inter(fontSize: 10, color: textMedColor),
                                               ),
                                             ],
                                           ),
@@ -594,12 +609,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                                 decoration: BoxDecoration(
-                                                  color: AppColors.chipBg,
+                                                  color: chipBg,
                                                   borderRadius: BorderRadius.circular(6),
                                                 ),
                                                 child: Text(
                                                   isQris ? 'QRIS' : 'Cash',
-                                                  style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.primary),
+                                                  style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: primaryColor),
                                                 ),
                                               ),
                                             ],
@@ -630,18 +645,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cardColor,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade200),
+                                  border: Border.all(color: cardBorder),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Total Omset', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMed)),
+                                    Text('Total Omset', style: GoogleFonts.inter(fontSize: 11, color: textMedColor)),
                                     const SizedBox(height: 4),
                                     Text(
                                       _formatRupiah(totalOmset),
-                                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
+                                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor),
                                     ),
                                   ],
                                 ),
@@ -652,18 +667,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cardColor,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade200),
+                                  border: Border.all(color: cardBorder),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Transaksi', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMed)),
+                                    Text('Transaksi', style: GoogleFonts.inter(fontSize: 11, color: textMedColor)),
                                     const SizedBox(height: 4),
                                     Text(
                                       '${filteredHistory.length} Invoice',
-                                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: textColor),
                                     ),
                                   ],
                                 ),
@@ -680,7 +695,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             const SizedBox(width: 6),
                             Text(
                               'Menu Terlaris (Urutan)',
-                              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
                             ),
                           ],
                         ),
@@ -692,22 +707,22 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cardColor,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade200),
+                                  border: Border.all(color: cardBorder),
                                 ),
                                 child: Center(
                                   child: Text(
                                     'Belum ada data penjualan pada periode ini',
-                                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.textMed),
+                                    style: GoogleFonts.inter(fontSize: 12, color: textMedColor),
                                   ),
                                 ),
                               )
                             : Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cardColor,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade200),
+                                  border: Border.all(color: cardBorder),
                                 ),
                                 child: ListView.separated(
                                   shrinkWrap: true,
@@ -728,28 +743,28 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                       dense: true,
                                       leading: CircleAvatar(
                                         radius: 12,
-                                        backgroundColor: rank <= 3 ? medalColor.withAlpha(40) : Colors.grey.shade100,
+                                        backgroundColor: rank <= 3 ? medalColor.withAlpha(40) : (isDark ? Colors.white10 : Colors.grey.shade100),
                                         child: Text(
                                           '$rank',
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: rank <= 3 ? medalColor : AppColors.textMed,
+                                            color: rank <= 3 ? medalColor : textMedColor,
                                           ),
                                         ),
                                       ),
                                       title: Text(
                                         item['nama'],
-                                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
                                       ),
                                       subtitle: Text(
                                         item['kategori'] ?? 'Uncategorized',
-                                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMed),
+                                        style: GoogleFonts.inter(fontSize: 11, color: textMedColor),
                                       ),
                                       trailing: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: AppColors.chipBg,
+                                          color: chipBg,
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Text(
@@ -757,7 +772,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.primary,
+                                            color: primaryColor,
                                           ),
                                         ),
                                       ),

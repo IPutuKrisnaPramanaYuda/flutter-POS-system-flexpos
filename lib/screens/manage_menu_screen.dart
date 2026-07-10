@@ -156,105 +156,109 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isEdit ? 'Edit Menu' : 'Tambah Menu Baru',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+        builder: (context, setSheetState) {
+          final isDarkSheet = Theme.of(context).brightness == Brightness.dark;
+          final sheetTextColor = isDarkSheet ? Colors.white : AppColors.textDark;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEdit ? 'Edit Menu' : 'Tambah Menu Baru',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: sheetTextColor,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _namaCtrl,
+                  style: GoogleFonts.inter(fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Menu / Produk',
+                    prefixIcon: Icon(Icons.restaurant_menu_rounded, color: AppColors.primary, size: 20),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _hargaCtrl,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.inter(fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: 'Harga (Rupiah)',
+                    prefixIcon: Icon(Icons.attach_money_rounded, color: AppColors.primary, size: 20),
+                    prefixText: 'Rp ',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _stokCtrl,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.inter(fontSize: 13),
+                  decoration: const InputDecoration(
+                    labelText: 'Jumlah Stok',
+                    prefixIcon: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 20),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Dropdown Kategori
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedCategory,
+                  style: GoogleFonts.inter(fontSize: 13, color: sheetTextColor),
+                  decoration: const InputDecoration(
+                    labelText: 'Kategori',
+                    prefixIcon: Icon(Icons.category_rounded, color: AppColors.primary, size: 20),
+                  ),
+                  items: DummyDatabase.categoryList.map((cat) {
+                    return DropdownMenuItem(value: cat, child: Text(cat));
+                  }).toList(),
+                  onChanged: (val) {
+                    setSheetState(() {
+                      _selectedCategory = val ?? 'Uncategorized';
+                    });
+                  },
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDarkSheet ? Colors.red.withAlpha(20) : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDarkSheet ? Colors.red.withAlpha(40) : Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            errorMessage!,
+                            style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    icon: const Icon(Icons.close_rounded, size: 20),
-                  ),
                 ],
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _namaCtrl,
-                style: GoogleFonts.inter(fontSize: 13),
-                decoration: const InputDecoration(
-                  labelText: 'Nama Menu / Produk',
-                  prefixIcon: Icon(Icons.restaurant_menu_rounded, color: AppColors.primary, size: 20),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _hargaCtrl,
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.inter(fontSize: 13),
-                decoration: const InputDecoration(
-                  labelText: 'Harga (Rupiah)',
-                  prefixIcon: Icon(Icons.attach_money_rounded, color: AppColors.primary, size: 20),
-                  prefixText: 'Rp ',
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _stokCtrl,
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.inter(fontSize: 13),
-                decoration: const InputDecoration(
-                  labelText: 'Jumlah Stok',
-                  prefixIcon: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 20),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Dropdown Kategori
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCategory,
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.textDark),
-                decoration: const InputDecoration(
-                  labelText: 'Kategori',
-                  prefixIcon: Icon(Icons.category_rounded, color: AppColors.primary, size: 20),
-                ),
-                items: DummyDatabase.categoryList.map((cat) {
-                  return DropdownMenuItem(value: cat, child: Text(cat));
-                }).toList(),
-                onChanged: (val) {
-                  setSheetState(() {
-                    _selectedCategory = val ?? 'Uncategorized';
-                  });
-                },
-              ),
-              if (errorMessage != null) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          errorMessage!,
-                          style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -296,10 +300,11 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   void _showDeleteDialog(Map<String, dynamic> menu) {
     showDialog(
@@ -342,9 +347,14 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
   @override
   Widget build(BuildContext context) {
     final menus = DummyDatabase.menuList;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkCard : Colors.white;
+    final cardBorder = isDark ? Colors.white.withAlpha(15) : Colors.grey.shade200;
+    final textColor = isDark ? Colors.white : AppColors.textDark;
+    final textMedColor = isDark ? Colors.white60 : AppColors.textMed;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Kelola Menu / Produk'),
         actions: [
@@ -367,7 +377,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                 children: [
                   Icon(Icons.restaurant_menu_rounded, size: 48, color: Colors.grey.shade300),
                   const SizedBox(height: 10),
-                  Text('Belum ada data menu', style: GoogleFonts.inter(color: AppColors.textMed)),
+                  Text('Belum ada data menu', style: GoogleFonts.inter(color: textMedColor)),
                 ],
               ),
             )
@@ -380,9 +390,9 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                 final stok = menu['stok'] as int;
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: cardBorder),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -395,7 +405,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                             children: [
                               Text(
                                 menu['nama'],
-                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
                               ),
                               const SizedBox(height: 2),
                               Row(
@@ -466,7 +476,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit_outlined, color: AppColors.textMed, size: 20),
+                              icon: Icon(Icons.edit_outlined, color: textMedColor, size: 20),
                               onPressed: () => _showEditMenuDialog(menu),
                               tooltip: 'Edit Menu',
                               constraints: const BoxConstraints(),
